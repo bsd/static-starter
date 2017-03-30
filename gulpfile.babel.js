@@ -1,28 +1,4 @@
-/**
- *
- *  Web Starter Kit
- *  Copyright 2015 Google Inc. All rights reserved.
- *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
- *
- *      https://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License
- *
- */
-
 'use strict';
-
-// This gulpfile makes use of new JavaScript features.
-// Babel handles this without us having to do anything. It just works.
-// You can read more about the new JavaScript features here:
-// https://babeljs.io/docs/learn-es2015/
 
 import path from 'path';
 import gulp from 'gulp';
@@ -37,9 +13,13 @@ import pkg from './package.json';
 const $ = gulpLoadPlugins();
 const reload = browserSync.reload;
 
+// Directory variables
+const dist = 'dist';
+const src = 'app';
+
 // Lint JavaScript
 gulp.task('lint', () =>
-  gulp.src(['app/scripts/**/*.js','!node_modules/**'])
+  gulp.src([`${src}/scripts/**/*.js`,'!node_modules/**'])
     .pipe($.eslint())
     .pipe($.eslint.format())
     .pipe($.if(!browserSync.active, $.eslint.failAfterError()))
@@ -47,24 +27,39 @@ gulp.task('lint', () =>
 
 // Optimize images
 gulp.task('images', () =>
-  gulp.src('app/images/**/*')
+  gulp.src([`${src}/images/**/*`, `!{src}/images/_*`])
     .pipe($.cache($.imagemin({
       progressive: true,
       interlaced: true
     })))
-    .pipe(gulp.dest('dist/images'))
+    .pipe(gulp.dest(`${dist}/images`))
     .pipe($.size({title: 'images'}))
 );
 
-// Copy all files at the root level (app)
+// SVG Sprite
+gulp.task('svg-sprites', () => {
+  return gulp.src(`${src}/images/_svg-sprite/**/*.svg`)
+  .pipe($.svgmin())
+  .pipe($.svgstore({ inlineSvg: true }))
+  .pipe($.rename('svg-sprites.svg'))
+  .pipe(gulp.dest(`${src}/_includes`));
+});
+
+// Sequentially generates sprites then reruns html task.
+gulp.task('embed-sprites', cb => runSequence('svg-sprites', 'html', cb));
+
+// Copy all files at the root level (app), except pug templates or any items
+// prefixed with an underscore.
 gulp.task('copy', () =>
   gulp.src([
-    'app/*',
-    '!app/*.html',
-    'node_modules/apache-server-configs/dist/.htaccess'
+    `${src}/*`,
+    `!${src}/_*`,
+    `!${src}/*.pug`,
+    // Uncomment the next line if you need a basic htaccess file.
+    // `node_modules/apache-server-configs/dist/.htaccess`
   ], {
     dot: true
-  }).pipe(gulp.dest('dist'))
+  }).pipe(gulp.dest(dist))
     .pipe($.size({title: 'copy'}))
 );
 
@@ -84,8 +79,8 @@ gulp.task('styles', () => {
 
   // For best performance, don't add Sass partials to `gulp.src`
   return gulp.src([
-    'app/styles/**/*.scss',
-    'app/styles/**/*.css'
+    `${src}/styles/**/*.scss`,
+    `${src}/styles/**/*.css`
   ])
     .pipe($.newer('.tmp/styles'))
     .pipe($.sourcemaps.init())
@@ -98,7 +93,7 @@ gulp.task('styles', () => {
     .pipe($.if('*.css', $.cssnano()))
     .pipe($.size({title: 'styles'}))
     .pipe($.sourcemaps.write('./'))
-    .pipe(gulp.dest('dist/styles'))
+    .pipe(gulp.dest(`${dist}/styles`))
     .pipe(gulp.dest('.tmp/styles'));
 });
 
@@ -110,7 +105,7 @@ gulp.task('scripts', () =>
       // Note: Since we are not using useref in the scripts build pipeline,
       //       you need to explicitly list your scripts here in the right order
       //       to be correctly concatenated
-      './app/scripts/main.js'
+      `./${src}/scripts/main.js`
       // Other scripts
     ])
       .pipe($.newer('.tmp/scripts'))
@@ -123,20 +118,25 @@ gulp.task('scripts', () =>
       // Output files
       .pipe($.size({title: 'scripts'}))
       .pipe($.sourcemaps.write('.'))
-      .pipe(gulp.dest('dist/scripts'))
+      .pipe(gulp.dest(`${dist}/scripts`))
       .pipe(gulp.dest('.tmp/scripts'))
 );
 
-// Scan your HTML for assets & optimize them
+// Processes pug templates into html.
 gulp.task('html', () => {
-  return gulp.src('app/**/*.html')
-    .pipe($.useref({
-      searchPath: '{.tmp,app}',
-      noAssets: true
+  return gulp.src([
+      `${src}/**/*.pug`,
+      `!${src}/**/_*.pug`
+    ]).pipe($.pug({
+      basedir: 'app',
+      pretty: true
     }))
 
-    // Minify any HTML
-    .pipe($.if('*.html', $.htmlmin({
+    // Futher minify your html. This is pretty aggressive, difficult to read,
+    // and can look wrong to some people (i.e. this won't close body and html
+    // tags as they are optional). If this isn't desired, consider commenting
+    // this out.
+    .pipe($.htmlmin({
       removeComments: true,
       collapseWhitespace: true,
       collapseBooleanAttributes: true,
@@ -146,17 +146,18 @@ gulp.task('html', () => {
       removeScriptTypeAttributes: true,
       removeStyleLinkTypeAttributes: true,
       removeOptionalTags: true
-    })))
-    // Output files
-    .pipe($.if('*.html', $.size({title: 'html', showFiles: true})))
-    .pipe(gulp.dest('dist'));
+    }))
+    .pipe(gulp.dest('.tmp'))
+    .pipe(gulp.dest(dist));
 });
 
+
 // Clean output directory
-gulp.task('clean', () => del(['.tmp', 'dist/*', '!dist/.git'], {dot: true}));
+gulp.task('clean', () => del(['.tmp', `${dist}/*`, `!${dist}/.git`],
+    {dot: true}));
 
 // Watch files for changes & reload
-gulp.task('serve', ['scripts', 'styles'], () => {
+gulp.task('serve', ['default'], () => {
   browserSync({
     notify: false,
     // Customize the Browsersync console logging prefix
@@ -167,14 +168,16 @@ gulp.task('serve', ['scripts', 'styles'], () => {
     // Note: this uses an unsigned certificate which on first access
     //       will present a certificate warning in the browser.
     // https: true,
-    server: ['.tmp', 'app'],
+    server: ['.tmp', src],
     port: 3000
   });
 
-  gulp.watch(['app/**/*.html'], reload);
-  gulp.watch(['app/styles/**/*.{scss,css}'], ['styles', reload]);
-  gulp.watch(['app/scripts/**/*.js'], ['lint', 'scripts', reload]);
-  gulp.watch(['app/images/**/*'], reload);
+  gulp.watch([`${src}/**/*.pug`], ['html', reload]);
+  gulp.watch([`${src}/styles/**/*.{scss,css}`], ['styles', reload]);
+  gulp.watch([`${src}/scripts/**/*.js`], ['lint', 'scripts', reload]);
+  gulp.watch([`${src}/images/**/*`], reload);
+  gulp.watch([`${src}/images/_svg-sprite/**/*'`], ['embed-sprites', reload]);
+
 });
 
 // Build and serve the output from the dist build
@@ -188,7 +191,7 @@ gulp.task('serve:dist', ['default'], () =>
     // Note: this uses an unsigned certificate which on first access
     //       will present a certificate warning in the browser.
     // https: true,
-    server: 'dist',
+    server: dist,
     port: 3001
   })
 );
@@ -196,7 +199,7 @@ gulp.task('serve:dist', ['default'], () =>
 // Build production files, the default task
 gulp.task('default', ['clean'], cb =>
   runSequence(
-    'styles',
+    ['styles', 'svg-sprites'],
     ['lint', 'html', 'scripts', 'images', 'copy'],
     'generate-service-worker',
     cb
@@ -216,8 +219,8 @@ gulp.task('pagespeed', cb =>
 
 // Copy over the scripts that are used in importScripts as part of the generate-service-worker task.
 gulp.task('copy-sw-scripts', () => {
-  return gulp.src(['node_modules/sw-toolbox/sw-toolbox.js', 'app/scripts/sw/runtime-caching.js'])
-    .pipe(gulp.dest('dist/scripts/sw'));
+  return gulp.src(['node_modules/sw-toolbox/sw-toolbox.js', `${src}/scripts/sw/runtime-caching.js`])
+    .pipe(gulp.dest(`${dist}/scripts/sw`));
 });
 
 // See http://www.html5rocks.com/en/tutorials/service-worker/introduction/ for
@@ -226,7 +229,7 @@ gulp.task('copy-sw-scripts', () => {
 // local resources. This should only be done for the 'dist' directory, to allow
 // live reload to work as expected when serving from the 'app' directory.
 gulp.task('generate-service-worker', ['copy-sw-scripts'], () => {
-  const rootDir = 'dist';
+  const rootDir = dist;
   const filepath = path.join(rootDir, 'service-worker.js');
 
   return swPrecache.write(filepath, {
