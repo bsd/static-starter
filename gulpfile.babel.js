@@ -1,5 +1,6 @@
 'use strict';
 
+import browserify from 'browserify';
 import path from 'path';
 import gulp from 'gulp';
 import del from 'del';
@@ -8,6 +9,8 @@ import browserSync from 'browser-sync';
 import swPrecache from 'sw-precache';
 import gulpLoadPlugins from 'gulp-load-plugins';
 import {output as pagespeed} from 'psi';
+import buffer from 'vinyl-buffer';
+import sourcestream from 'vinyl-source-stream';
 import pkg from './package.json';
 
 const $ = gulpLoadPlugins();
@@ -79,12 +82,17 @@ gulp.task('styles', () => {
 
   // For best performance, don't add Sass partials to `gulp.src`
   return gulp.src([
-    `${src}/styles/**/*.scss`,
-    `${src}/styles/**/*.css`
+    `${src}/styles/**/*.scss`
   ])
     .pipe($.newer('.tmp/styles'))
+    .pipe($.sassLint())
+    .pipe($.sassLint.format())
+    .pipe($.sassLint.failOnError())
     .pipe($.sourcemaps.init())
     .pipe($.sass({
+      includePaths: ['node_modules']
+        .concat(require('bourbon').includePaths)
+        .concat(require('bourbon-neat').includePaths),
       precision: 10
     }).on('error', $.sass.logError))
     .pipe($.autoprefixer(AUTOPREFIXER_BROWSERS))
@@ -97,6 +105,31 @@ gulp.task('styles', () => {
     .pipe(gulp.dest('.tmp/styles'));
 });
 
+// Scripts
+gulp.task('scripts', () => {
+  const b = browserify({
+    entries: `${src}/scripts/main.js`,
+    debug: true,
+    paths: ['node_modules',`${src}/scripts`]
+  });
+
+  return b.transform('babelify', {
+    presets: ['es2015']
+  })
+  .bundle()
+  .pipe(sourcestream('main.js'))
+  .pipe(buffer())
+  .pipe(gulp.dest(`${dist}/scripts`))
+  .pipe(gulp.dest(`.tmp/scripts`))
+  .pipe($.sourcemaps.init())
+  .pipe($.uglify())
+  .pipe($.sourcemaps.write('.'))
+  .pipe($.rename('main.min.js'))
+  .pipe(gulp.dest(`${dist}/scripts`))
+  .pipe(gulp.dest(`.tmp/scripts`))
+  .pipe($.size({title: 'scripts'}));
+});
+/*
 // Concatenate and minify JavaScript. Optionally transpiles ES2015 code to ES5.
 // to enable ES2015 support remove the line `"only": "gulpfile.babel.js",` in the
 // `.babelrc` file.
@@ -121,6 +154,7 @@ gulp.task('scripts', () =>
       .pipe(gulp.dest(`${dist}/scripts`))
       .pipe(gulp.dest('.tmp/scripts'))
 );
+*/
 
 // Processes pug templates into html.
 gulp.task('html', () => {
@@ -131,6 +165,7 @@ gulp.task('html', () => {
       basedir: 'app',
       pretty: true
     }))
+    .pipe(gulp.dest('.tmp'))
 
     // Futher minify your html. This is pretty aggressive, difficult to read,
     // and can look wrong to some people (i.e. this won't close body and html
@@ -147,7 +182,6 @@ gulp.task('html', () => {
       removeStyleLinkTypeAttributes: true,
       removeOptionalTags: true
     }))
-    .pipe(gulp.dest('.tmp'))
     .pipe(gulp.dest(dist));
 });
 
@@ -175,9 +209,12 @@ gulp.task('serve', ['default'], () => {
   gulp.watch([`${src}/**/*.pug`], ['html', reload]);
   gulp.watch([`${src}/styles/**/*.{scss,css}`], ['styles', reload]);
   gulp.watch([`${src}/scripts/**/*.js`], ['lint', 'scripts', reload]);
-  gulp.watch([`${src}/images/**/*`], reload);
-  gulp.watch([`${src}/images/_svg-sprite/**/*'`], ['embed-sprites', reload]);
-
+  gulp.watch([`${src}/images/_svg-sprite/**/*.svg`],
+      ['embed-sprites', reload]);
+  gulp.watch([
+    `${src}/images/**/*`,
+    `!${src}/images/_svg-sprite/**/*`
+  ], reload);
 });
 
 // Build and serve the output from the dist build

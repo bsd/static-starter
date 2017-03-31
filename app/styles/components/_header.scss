@@ -1,0 +1,24 @@
+.main-header {
+  background: $color-royalblue;
+  color: $color-white;
+  margin-bottom: 50px;
+  padding: 10px;
+
+  .branding {
+    color: $color-white;
+    font-size: map-get($font-size-h3, desktop);
+    font-weight: map-get($font-weight, bold);
+    text-decoration: none;
+  }
+}
+
+.nav-toggle {
+  @include position(absolute, 10px 10px null null)
+  background: none;
+  border: 0;
+  color: $color-white;
+
+  .icon {
+    @include size(24px);
+  }
+}

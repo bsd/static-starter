@@ -1,0 +1,13 @@
+footer.main-footer
+  .page-contain
+    block footer
+      nav.footer-nav
+        ul.inline-list.site-links
+          li
+            a(href='#') Privacy Policy
+          li
+            a(href='#') Terms of Service
+        if socialLinks
+          .social-links
+            h4.social-header.type-small Follow us
+            +social-list(socialLinks)

@@ -1,0 +1,16 @@
+$nav-width: 240px;
+
+.header-nav {
+  @include position(fixed, 0 (-$nav-width) 0 null);
+  background-color: $color-grey-light;
+  padding: 30px;
+  width: $nav-width;
+}
+
+body {
+  transition: transform 300ms ease-in-out;
+
+  &.nav-active {
+    transform: translateX(-$nav-width);
+  }
+}
