@@ -105,7 +105,9 @@ gulp.task('styles', () => {
     .pipe(gulp.dest('.tmp/styles'));
 });
 
-// Scripts
+// This uses babelify to compile ES6 modules and transpile them to ES5.
+// TODO(jjandoc): The sourcemaps aren't gnerating correctly. Need to figure out
+// what's going on with them.
 gulp.task('scripts', () => {
   const b = browserify({
     entries: `${src}/scripts/main.js`,
@@ -129,7 +131,7 @@ gulp.task('scripts', () => {
   .pipe(gulp.dest(`.tmp/scripts`))
   .pipe($.size({title: 'scripts'}));
 });
-/*
+/* Commenting out the Web Starter Kit script task.
 // Concatenate and minify JavaScript. Optionally transpiles ES2015 code to ES5.
 // to enable ES2015 support remove the line `"only": "gulpfile.babel.js",` in the
 // `.babelrc` file.
