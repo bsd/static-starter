@@ -1,6 +1,7 @@
 /* eslint-env browser */
 import jquery from 'jquery';
-import scrollTo from 'jquery.scrollto/jquery.scrollTo.js';
+import _ from 'underscore';
+import scrollTo from 'jquery.scrollto';
 
 jquery.fn.scrollTo = scrollTo;
 
@@ -60,15 +61,17 @@ jquery.fn.scrollTo = scrollTo;
   }
 
   // Your custom JavaScript goes here
-
-  $('.js-toggle-nav').on('click', e => {
+  $('body').on('click', '.js-smooth-scroll', _.debounce(e => {
+    e.preventDefault();
+    const hash = $(e.currentTarget).attr('href');
+    const $scrollTarget = $(hash);
+    $(window).scrollTo($scrollTarget, 300, {
+      onAfter: () => {
+        window.location.hash = hash;
+      }
+    });
+  }, 200, true)).on('click', '.js-toggle-nav', _.debounce(e => {
     $(e.currentTarget).blur();
     $('body').toggleClass('nav-active');
-  });
-
-  $('body').on('click', '.js-smooth-scroll', e => {
-    e.preventDefault();
-    const $scrollTarget = $($(e.currentTarget).attr('href'));
-    $(window).scrollTo($scrollTarget, 300);
-  });
+  }, 200, true));
 })(jquery);
