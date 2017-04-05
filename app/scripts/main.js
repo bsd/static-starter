@@ -1,9 +1,7 @@
 /* eslint-env browser */
 import jquery from 'jquery';
 import _ from 'underscore';
-import scrollTo from 'jquery.scrollto';
-
-jquery.fn.scrollTo = scrollTo;
+import 'jquery.scrollto';
 
 (function($) {
   'use strict';
