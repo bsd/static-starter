@@ -18,10 +18,23 @@
   max-width: $max-content-width;
 }
 
-.main-content {
+.content-artice {
   @include grid-container;
 }
 
+.content-header,
+.content-sidebar,
 .content-body {
   @include grid-column(12);
+  margin-bottom: 30px;
+}
+
+@media #{$bp-tablet-up} {
+  .content-sidebar {
+    @include grid-column(3);
+  }
+
+  .content-body {
+    @include grid-column(9);
+  }
 }
