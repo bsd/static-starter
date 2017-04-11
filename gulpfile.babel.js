@@ -55,7 +55,7 @@ gulp.task('embed-sprites', cb => runSequence('svg-sprites', 'html', cb));
 // prefixed with an underscore.
 gulp.task('copy', () =>
   gulp.src([
-    `${src}/*`,
+    `${src}/**/*`,
     `!${src}/_*`,
     `!${src}/*.pug`,
     // Uncomment the next line if you need a basic htaccess file.
