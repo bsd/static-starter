@@ -4,6 +4,7 @@ import browserify from 'browserify';
 import path from 'path';
 import gulp from 'gulp';
 import del from 'del';
+import marked from 'marked';
 import runSequence from 'run-sequence';
 import browserSync from 'browser-sync';
 import swPrecache from 'sw-precache';
@@ -15,6 +16,12 @@ import pkg from './package.json';
 
 const $ = gulpLoadPlugins();
 const reload = browserSync.reload;
+const fs = require('fs');
+
+marked.setOptions({
+  pedantic: true,
+  smartypants: true
+});
 
 // Directory variables
 const dist = 'dist';
@@ -22,10 +29,13 @@ const src = 'app';
 
 // Lint JavaScript
 gulp.task('lint', () =>
-  gulp.src([`${src}/scripts/**/*.js`,'!node_modules/**'])
-    .pipe($.eslint())
-    .pipe($.eslint.format())
-    .pipe($.if(!browserSync.active, $.eslint.failAfterError()))
+  gulp.src([
+    `${src}/scripts/**/*.js`,
+    'gulpfile.babel.js',
+    '!node_modules/**'
+  ]).pipe($.eslint())
+  .pipe($.eslint.format())
+  .pipe($.if(!browserSync.active, $.eslint.failAfterError()))
 );
 
 // Optimize images
@@ -43,13 +53,14 @@ gulp.task('images', () =>
 gulp.task('svg-sprites', () => {
   return gulp.src(`${src}/images/_svg-sprite/**/*.svg`)
   .pipe($.svgmin())
-  .pipe($.svgstore({ inlineSvg: true }))
+  .pipe($.svgstore({inlineSvg: true}))
   .pipe($.rename('svg-sprites.svg'))
   .pipe(gulp.dest(`${src}/_includes`));
 });
 
 // Sequentially generates sprites then reruns html task.
-gulp.task('embed-sprites', cb => runSequence('svg-sprites', 'html', cb));
+gulp.task('embed-sprites', cb =>
+    runSequence('svg-sprites', ['html', 'markdown'], cb));
 
 // Copy all files at the root level (app), except pug templates or any items
 // prefixed with an underscore.
@@ -57,7 +68,8 @@ gulp.task('copy', () =>
   gulp.src([
     `${src}/**/*`,
     `!${src}/_*`,
-    `!${src}/*.pug`,
+    `!${src}/**/*.pug`,
+    `!${src}/**/*.md`
     // Uncomment the next line if you need a basic htaccess file.
     // `node_modules/apache-server-configs/dist/.htaccess`
   ], {
@@ -112,7 +124,7 @@ gulp.task('scripts', () => {
   const b = browserify({
     entries: `${src}/scripts/main.js`,
     debug: true,
-    paths: ['node_modules',`${src}/scripts`]
+    paths: ['node_modules', `${src}/scripts`]
   });
 
   return b.transform('babelify', {
@@ -158,35 +170,52 @@ gulp.task('scripts', () =>
 );
 */
 
+// HTML Minification optionsThis is pretty aggressive, difficult to read,
+// and can look wrong to some people (i.e. this won't close body and html
+// tags as they are optional). If this isn't desired, consider commenting
+// this out, for example if handing static assets off to another developer.
+const minificationOptions = {
+  removeComments: true,
+  collapseWhitespace: true,
+  collapseBooleanAttributes: true,
+  removeAttributeQuotes: true,
+  removeRedundantAttributes: true,
+  removeEmptyAttributes: true,
+  removeScriptTypeAttributes: true,
+  removeStyleLinkTypeAttributes: true,
+  removeOptionalTags: true
+};
+
 // Processes pug templates into html.
 gulp.task('html', () => {
   return gulp.src([
-      `${src}/**/*.pug`,
-      `!${src}/**/_*.pug`
-    ]).pipe($.pug({
-      basedir: 'app',
-      pretty: true
-    }))
-    .pipe(gulp.dest('.tmp'))
-
-    // Futher minify your html. This is pretty aggressive, difficult to read,
-    // and can look wrong to some people (i.e. this won't close body and html
-    // tags as they are optional). If this isn't desired, consider commenting
-    // this out.
-    .pipe($.htmlmin({
-      removeComments: true,
-      collapseWhitespace: true,
-      collapseBooleanAttributes: true,
-      removeAttributeQuotes: true,
-      removeRedundantAttributes: true,
-      removeEmptyAttributes: true,
-      removeScriptTypeAttributes: true,
-      removeStyleLinkTypeAttributes: true,
-      removeOptionalTags: true
-    }))
-    .pipe(gulp.dest(dist));
+    `${src}/**/*.pug`,
+    `!${src}/**/_*.pug`
+  ]).pipe($.pug({
+    basedir: 'app',
+    pretty: true
+  }))
+  .pipe(gulp.dest('.tmp'))
+  .pipe($.htmlmin(minificationOptions))
+  .pipe(gulp.dest(dist));
 });
 
+gulp.task('markdown', () => {
+  return gulp.src([
+    `${src}/**/*.md`
+  ]).pipe($.plumber())
+  .pipe($.markdownToJson(marked))
+  .pipe($.wrap(data =>
+      fs.readFileSync(`${src}/${data.contents.template}`).toString(), {}, {
+    basedir: 'app',
+    engine: 'pug',
+    pretty: true
+  }))
+  .pipe($.rename({extname: '.html'}))
+  .pipe(gulp.dest('.tmp'))
+  .pipe($.htmlmin(minificationOptions))
+  .pipe(gulp.dest(dist));
+});
 
 // Clean output directory
 gulp.task('clean', () => del(['.tmp', `${dist}/*`, `!${dist}/.git`],
@@ -209,6 +238,7 @@ gulp.task('serve', ['default'], () => {
   });
 
   gulp.watch([`${src}/**/*.pug`], ['html', reload]);
+  gulp.watch([`${src}/**/*.md`], ['markdown', reload]);
   gulp.watch([`${src}/styles/**/*.{scss,css}`], ['styles', reload]);
   gulp.watch([`${src}/scripts/**/*.js`], ['lint', 'scripts', reload]);
   gulp.watch([`${src}/images/_svg-sprite/**/*.svg`],
@@ -239,7 +269,7 @@ gulp.task('serve:dist', ['default'], () =>
 gulp.task('default', ['clean'], cb =>
   runSequence(
     ['styles', 'svg-sprites'],
-    ['lint', 'html', 'scripts', 'images', 'copy'],
+    ['lint', 'html', 'markdown', 'scripts', 'images', 'copy'],
     'generate-service-worker',
     cb
   )
@@ -258,8 +288,10 @@ gulp.task('pagespeed', cb =>
 
 // Copy over the scripts that are used in importScripts as part of the generate-service-worker task.
 gulp.task('copy-sw-scripts', () => {
-  return gulp.src(['node_modules/sw-toolbox/sw-toolbox.js', `${src}/scripts/sw/runtime-caching.js`])
-    .pipe(gulp.dest(`${dist}/scripts/sw`));
+  return gulp.src([
+    'node_modules/sw-toolbox/sw-toolbox.js',
+    `${src}/scripts/sw/runtime-caching.js`
+  ]).pipe(gulp.dest(`${dist}/scripts/sw`));
 });
 
 // See http://www.html5rocks.com/en/tutorials/service-worker/introduction/ for
