@@ -1,7 +1,7 @@
 backend:
   name: github
-  repo: bsd/static-starterkit # Gulp will replace this with your GitHub repository
-  branch: netlify-cms # Branch to update (master by default)
+  repo: "bsd/static-starterkit" # Gulp will replace this with your GitHub repository
+  branch: "netlify-cms" # Branch to update (master by default)
 
 media_folder: "app/images/uploads" # Folder where user uploaded files should go
 public_folder: "img/uploads"
@@ -9,7 +9,7 @@ public_folder: "img/uploads"
 collections: # A list of collections the CMS should be able to edit
   - name: "post" # Used in routes, ie.: /admin/collections/:slug/edit
     label: "Post" # Used in the UI, ie.: "New Post"
-    folder: "site/content/post" # The path to the folder where the documents are stored
+    folder: "app/post" # The path to the folder where the documents are stored
     create: true # Allow users to create new documents in this collection
     fields: # The fields each document in this collection have
       - {label: "Title", name: "title", widget: "string"}
