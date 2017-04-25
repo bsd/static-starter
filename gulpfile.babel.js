@@ -1,5 +1,6 @@
 'use strict';
 
+import babelify from 'babelify';
 import browserify from 'browserify';
 import path from 'path';
 import gulp from 'gulp';
@@ -22,10 +23,14 @@ const src = 'app';
 
 // Lint JavaScript
 gulp.task('lint', () =>
-  gulp.src([`${src}/scripts/**/*.js`,'!node_modules/**'])
-    .pipe($.eslint())
-    .pipe($.eslint.format())
-    .pipe($.if(!browserSync.active, $.eslint.failAfterError()))
+  gulp.src([
+    `${src}/scripts/**/*.js`,
+    'gulpfile.babel.js',
+    '!node_modules/**'
+  ])
+  .pipe($.eslint())
+  .pipe($.eslint.format())
+  .pipe($.if(!browserSync.active, $.eslint.failAfterError()))
 );
 
 // Optimize images
@@ -43,7 +48,7 @@ gulp.task('images', () =>
 gulp.task('svg-sprites', () => {
   return gulp.src(`${src}/images/_svg-sprite/**/*.svg`)
   .pipe($.svgmin())
-  .pipe($.svgstore({ inlineSvg: true }))
+  .pipe($.svgstore({inlineSvg: true}))
   .pipe($.rename('svg-sprites.svg'))
   .pipe(gulp.dest(`${src}/_includes`));
 });
@@ -57,7 +62,7 @@ gulp.task('copy', () =>
   gulp.src([
     `${src}/*`,
     `!${src}/_*`,
-    `!${src}/*.pug`,
+    `!${src}/*.pug`
     // Uncomment the next line if you need a basic htaccess file.
     // `node_modules/apache-server-configs/dist/.htaccess`
   ], {
@@ -106,87 +111,53 @@ gulp.task('styles', () => {
 });
 
 // This uses babelify to compile ES6 modules and transpile them to ES5.
-// TODO(jjandoc): The sourcemaps aren't gnerating correctly. Need to figure out
-// what's going on with them.
 gulp.task('scripts', () => {
   const b = browserify({
     entries: `${src}/scripts/main.js`,
     debug: true,
-    paths: ['node_modules',`${src}/scripts`]
+    paths: ['node_modules', `${src}/scripts`],
+    transform: [babelify]
   });
 
-  return b.transform('babelify', {
-    presets: ['es2015']
-  })
-  .bundle()
+  return b.bundle()
   .pipe(sourcestream('main.js'))
   .pipe(buffer())
-  .pipe(gulp.dest(`${dist}/scripts`))
-  .pipe(gulp.dest(`.tmp/scripts`))
-  .pipe($.sourcemaps.init())
+  .pipe($.sourcemaps.init({loadMaps: true}))
   .pipe($.uglify())
   .pipe($.sourcemaps.write('.'))
-  .pipe($.rename('main.min.js'))
   .pipe(gulp.dest(`${dist}/scripts`))
   .pipe(gulp.dest(`.tmp/scripts`))
   .pipe($.size({title: 'scripts'}));
 });
-/* Commenting out the Web Starter Kit script task.
-// Concatenate and minify JavaScript. Optionally transpiles ES2015 code to ES5.
-// to enable ES2015 support remove the line `"only": "gulpfile.babel.js",` in the
-// `.babelrc` file.
-gulp.task('scripts', () =>
-    gulp.src([
-      // Note: Since we are not using useref in the scripts build pipeline,
-      //       you need to explicitly list your scripts here in the right order
-      //       to be correctly concatenated
-      `./${src}/scripts/main.js`
-      // Other scripts
-    ])
-      .pipe($.newer('.tmp/scripts'))
-      .pipe($.sourcemaps.init())
-      .pipe($.babel())
-      .pipe($.sourcemaps.write())
-      .pipe(gulp.dest('.tmp/scripts'))
-      .pipe($.concat('main.min.js'))
-      .pipe($.uglify({preserveComments: 'some'}))
-      // Output files
-      .pipe($.size({title: 'scripts'}))
-      .pipe($.sourcemaps.write('.'))
-      .pipe(gulp.dest(`${dist}/scripts`))
-      .pipe(gulp.dest('.tmp/scripts'))
-);
-*/
 
 // Processes pug templates into html.
 gulp.task('html', () => {
   return gulp.src([
-      `${src}/**/*.pug`,
-      `!${src}/**/_*.pug`
-    ]).pipe($.pug({
-      basedir: 'app',
-      pretty: true
-    }))
-    .pipe(gulp.dest('.tmp'))
+    `${src}/**/*.pug`,
+    `!${src}/**/_*.pug`
+  ]).pipe($.pug({
+    basedir: 'app',
+    pretty: true
+  }))
+  .pipe(gulp.dest('.tmp'))
 
-    // Futher minify your html. This is pretty aggressive, difficult to read,
-    // and can look wrong to some people (i.e. this won't close body and html
-    // tags as they are optional). If this isn't desired, consider commenting
-    // this out.
-    .pipe($.htmlmin({
-      removeComments: true,
-      collapseWhitespace: true,
-      collapseBooleanAttributes: true,
-      removeAttributeQuotes: true,
-      removeRedundantAttributes: true,
-      removeEmptyAttributes: true,
-      removeScriptTypeAttributes: true,
-      removeStyleLinkTypeAttributes: true,
-      removeOptionalTags: true
-    }))
-    .pipe(gulp.dest(dist));
+  // Futher minify your html. This is pretty aggressive, difficult to read,
+  // and can look wrong to some people (i.e. this won't close body and html
+  // tags as they are optional). If this isn't desired, consider commenting
+  // this out.
+  .pipe($.htmlmin({
+    removeComments: true,
+    collapseWhitespace: true,
+    collapseBooleanAttributes: true,
+    removeAttributeQuotes: true,
+    removeRedundantAttributes: true,
+    removeEmptyAttributes: true,
+    removeScriptTypeAttributes: true,
+    removeStyleLinkTypeAttributes: true,
+    removeOptionalTags: true
+  }))
+  .pipe(gulp.dest(dist));
 });
-
 
 // Clean output directory
 gulp.task('clean', () => del(['.tmp', `${dist}/*`, `!${dist}/.git`],
@@ -256,9 +227,11 @@ gulp.task('pagespeed', cb =>
   }, cb)
 );
 
-// Copy over the scripts that are used in importScripts as part of the generate-service-worker task.
+// Copy over the scripts that are used in importScripts as part of the
+// generate-service-worker task.
 gulp.task('copy-sw-scripts', () => {
-  return gulp.src(['node_modules/sw-toolbox/sw-toolbox.js', `${src}/scripts/sw/runtime-caching.js`])
+  return gulp.src(['node_modules/sw-toolbox/sw-toolbox.js',
+    `${src}/scripts/sw/runtime-caching.js`])
     .pipe(gulp.dest(`${dist}/scripts/sw`));
 });
 
@@ -274,7 +247,8 @@ gulp.task('generate-service-worker', ['copy-sw-scripts'], () => {
   return swPrecache.write(filepath, {
     // Used to avoid cache conflicts when serving on localhost.
     cacheId: pkg.name || 'web-starter-kit',
-    // sw-toolbox.js needs to be listed first. It sets up methods used in runtime-caching.js.
+    // sw-toolbox.js needs to be listed first. It sets up methods used in
+    // runtime-caching.js.
     importScripts: [
       'scripts/sw/sw-toolbox.js',
       'scripts/sw/runtime-caching.js'
