@@ -30,7 +30,6 @@ gulp.task('lint', () =>
   ])
   .pipe($.eslint())
   .pipe($.eslint.format())
-  .pipe($.if(!browserSync.active, $.eslint.failAfterError()))
 );
 
 // Optimize images
@@ -71,8 +70,23 @@ gulp.task('copy', () =>
     .pipe($.size({title: 'copy'}))
 );
 
+// Lint sass files.
+// Styles
+gulp.task('stylelint', function() {
+  return gulp.src([
+    `${src}/styles/**/*.s+(a|c)ss`,
+    `${src}/styles/**/*.css`,
+    `!${src}/styles/vendor/**`,
+  ])
+  .pipe($.stylelint({
+    reporters: [
+      {formatter: 'string', console: true},
+    ],
+  }));
+});
+
 // Compile and automatically prefix stylesheets
-gulp.task('styles', () => {
+gulp.task('styles', ['stylelint'], () => {
   const AUTOPREFIXER_BROWSERS = [
     'ie >= 10',
     'ie_mob >= 10',
@@ -87,12 +101,9 @@ gulp.task('styles', () => {
 
   // For best performance, don't add Sass partials to `gulp.src`
   return gulp.src([
-    `${src}/styles/**/*.scss`
+    `${src}/styles/main.scss`
   ])
     .pipe($.newer('.tmp/styles'))
-    .pipe($.sassLint())
-    .pipe($.sassLint.format())
-    .pipe($.sassLint.failOnError())
     .pipe($.sourcemaps.init())
     .pipe($.sass({
       includePaths: ['node_modules']

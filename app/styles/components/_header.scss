@@ -13,7 +13,7 @@
 }
 
 .nav-toggle {
-  @include position(absolute, 10px 10px null null)
+  @include position(absolute, 10px 10px null null);
   background: none;
   border: 0;
   color: $color-white;
