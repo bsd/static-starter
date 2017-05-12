@@ -1,11 +1,15 @@
 
 ## .babelrc
 
-[.babelrc](https://babeljs.io/docs/usage/babelrc/) is a configuration file for passing options to [Babel](https://babeljs.io) - the ES2015 transpiler recommended for writing next-generation JavaScript in Web Starter Kit. 
+[.babelrc](https://babeljs.io/docs/usage/babelrc/) is a configuration file for passing options to [Babel](https://babeljs.io) - the ES2015 transpiler recommended for writing next-generation JavaScript. 
 
 ## .editorconfig
 
 [EditorConfig](http://editorconfig.org/) is a file format and collection of text editor plugins for maintaining consistent coding styles between different editors and IDEs.
+
+## .stylelintrc
+
+The [Stylelint](https://github.com/stylelint/stylelint) file configures the Sass linting task in gulp.
 
 ## gulpfile.babel.js
 
@@ -14,6 +18,10 @@
 In gulp, you would install plugins, that do one thing and do it well, and construct a 'pipeline' by connecting them to each other. A `gulpfile` allows you to put together tasks that use plugins to accomplish a task like minification. 
 
 `gulpfile.babel.js` is a gulpfile written in ES2015. The `babel` portion of the name refers to its use of the [Babel](https://babeljs.io) transpiler for enabling ES2015 code to run there.
+
+## app/images
+
+jpg and png images added here will be optimized with gulp. SVG images added to the _svg-sprite directory will be concatenated and inlined to be used as [SVG sprites](https://css-tricks.com/svg-use-with-external-reference-take-2/).
 
 ## app/scripts/main.js
 
