@@ -21,7 +21,7 @@ In gulp, you would install plugins, that do one thing and do it well, and constr
 
 ## app/images
 
-jpg and png images added here will be optimized with gulp. SVG images added to the _svg-sprite directory will be concatenated and inlined to be used as [SVG sprites](https://css-tricks.com/svg-use-with-external-reference-take-2/).
+jpg and png images added here will be optimized with gulp. SVG images added to the _svg-sprite directory will be concatenated and inlined to be used as [SVG sprites](https://css-tricks.com/svg-sprites-use-better-icon-fonts/#article-header-id-2).
 
 ## app/scripts/main.js
 
