@@ -68,9 +68,9 @@ gulp.task('copy', () =>
   gulp.src([
     `${src}/**/*`,
     `!${src}/_*`,
-    `!${src}/images`,
-    `!${src}/scripts`,
-    `!${src}/styles`,
+    `!${src}/images/**/*`,
+    `!${src}/scripts/**/*`,
+    `!${src}/styles/**/*`,
     `!${src}/**/*.pug`,
     `!${src}/**/*.md`
     // Uncomment the next line if you need a basic htaccess file.
