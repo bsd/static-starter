@@ -34,13 +34,18 @@ gulp.task('lint', () =>
 
 // Optimize images
 gulp.task('images', () =>
-  gulp.src([`${src}/images/**/*`, `!{src}/images/_*`])
-    .pipe($.cache($.imagemin({
-      progressive: true,
-      interlaced: true
-    })))
-    .pipe(gulp.dest(`${dist}/images`))
-    .pipe($.size({title: 'images'}))
+  gulp.src([
+    `${src}/images/**/*`,
+    `!${src}/images/_**/*`,
+    `!${src}/images/_*`
+  ])
+  .pipe($.cache($.imagemin({
+    progressive: true,
+    interlaced: true
+  })))
+  .pipe($.if('*.svg', $.svgmin()))
+  .pipe(gulp.dest(`${dist}/images`))
+  .pipe($.size({title: 'images'}))
 );
 
 // SVG Sprite
@@ -59,8 +64,12 @@ gulp.task('embed-sprites', cb => runSequence('svg-sprites', 'html', cb));
 // prefixed with an underscore.
 gulp.task('copy', () =>
   gulp.src([
-    `${src}/*`,
+    `${src}/**/*`,
     `!${src}/_*`,
+    `!${src}/_**/*`,
+    `!${src}/images/**/*`,
+    `!${src}/scripts/**/*`,
+    `!${src}/styles/**/*`,
     `!${src}/*.pug`
     // Uncomment the next line if you need a basic htaccess file.
     // `node_modules/apache-server-configs/dist/.htaccess`
