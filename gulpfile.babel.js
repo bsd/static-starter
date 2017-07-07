@@ -34,19 +34,25 @@ gulp.task('lint', () =>
     `${src}/scripts/**/*.js`,
     'gulpfile.babel.js',
     '!node_modules/**'
-  ]).pipe($.eslint())
+  ])
+  .pipe($.eslint())
   .pipe($.eslint.format())
 );
 
 // Optimize images
 gulp.task('images', () =>
-  gulp.src([`${src}/images/**/*`, `!{src}/images/_*`])
-    .pipe($.cache($.imagemin({
-      progressive: true,
-      interlaced: true
-    })))
-    .pipe(gulp.dest(`${dist}/images`))
-    .pipe($.size({title: 'images'}))
+  gulp.src([
+    `${src}/images/**/*`,
+    `!${src}/images/_**/*`,
+    `!${src}/images/_*`
+  ])
+  .pipe($.cache($.imagemin({
+    progressive: true,
+    interlaced: true
+  })))
+  .pipe($.if('*.svg', $.svgmin()))
+  .pipe(gulp.dest(`${dist}/images`))
+  .pipe($.size({title: 'images'}))
 );
 
 // SVG Sprite
@@ -68,6 +74,7 @@ gulp.task('copy', () =>
   gulp.src([
     `${src}/**/*`,
     `!${src}/_*`,
+    `!${src}/_**/*`,
     `!${src}/images/**/*`,
     `!${src}/scripts/**/*`,
     `!${src}/styles/**/*`,
@@ -87,12 +94,12 @@ gulp.task('stylelint', function() {
   return gulp.src([
     `${src}/styles/**/*.s+(a|c)ss`,
     `${src}/styles/**/*.css`,
-    `!${src}/styles/vendor/**`,
+    `!${src}/styles/vendor/**/*`
   ])
   .pipe($.stylelint({
     reporters: [
-      {formatter: 'string', console: true},
-    ],
+      {formatter: 'string', console: true}
+    ]
   }));
 });
 
@@ -185,14 +192,15 @@ gulp.task('html', () => {
 gulp.task('markdown', () => {
   return gulp.src([
     `${src}/**/*.md`
-  ]).pipe($.plumber())
+  ])
+  .pipe($.plumber())
   .pipe($.markdownToJson(marked))
   .pipe($.wrap(data =>
       fs.readFileSync(`${src}/${data.contents.template}`).toString(), {}, {
-    basedir: 'app',
-    engine: 'pug',
-    pretty: true
-  }))
+        basedir: 'app',
+        engine: 'pug',
+        pretty: true
+      }))
   .pipe($.rename({extname: '.html'}))
   .pipe(gulp.dest('.tmp'))
   .pipe($.htmlmin(minificationOptions))
