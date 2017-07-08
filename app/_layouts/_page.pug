@@ -1,0 +1,18 @@
+extends /_layouts/_main.pug
+
+block content
+  article.content-artice
+    header.content-header
+      h1= contents.title
+      p.lead= contents.lead
+    aside.content-sidebar
+      nav.internal-nav
+        ul.unstyled-list
+          each item, index in contents.sections
+            li
+              a(href=`#section-${index + 1}`).js-smooth-scroll= item.title
+    article.content-body
+      each item, index in contents.sections
+        section(id=`section-${index + 1}`)
+          h2= item.title
+          != item.contents

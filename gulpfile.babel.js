@@ -72,6 +72,8 @@ gulp.task('embed-sprites', cb =>
 // prefixed with an underscore.
 gulp.task('copy', () =>
   gulp.src([
+    // Uncomment the next line if you need a basic htaccess file.
+    // `node_modules/apache-server-configs/dist/.htaccess`,
     `${src}/**/*`,
     `!${src}/_*`,
     `!${src}/_**/*`,
@@ -80,8 +82,6 @@ gulp.task('copy', () =>
     `!${src}/styles/**/*`,
     `!${src}/**/*.pug`,
     `!${src}/**/*.md`
-    // Uncomment the next line if you need a basic htaccess file.
-    // `node_modules/apache-server-configs/dist/.htaccess`
   ], {
     dot: true
   }).pipe(gulp.dest(dist))
