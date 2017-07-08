@@ -15,4 +15,4 @@ block content
       each item, index in contents.sections
         section(id=`section-${index + 1}`)
           h2= item.title
-          != item.contents
+          != md(item.content)

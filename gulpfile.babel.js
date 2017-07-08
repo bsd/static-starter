@@ -196,7 +196,9 @@ gulp.task('markdown', () => {
   .pipe($.plumber())
   .pipe($.markdownToJson(marked))
   .pipe($.wrap(data =>
-      fs.readFileSync(`${src}/${data.contents.template}`).toString(), {}, {
+      fs.readFileSync(`${src}/${data.contents.template}`).toString(), {
+        md: marked
+      }, {
         basedir: 'app',
         engine: 'pug',
         pretty: true
