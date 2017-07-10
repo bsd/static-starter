@@ -230,7 +230,7 @@ gulp.task('serve', ['default'], () => {
   });
 
   gulp.watch([`${src}/**/*.pug`], ['html', reload]);
-  gulp.watch([`${src}/**/*.md`], ['markdown', reload]);
+  gulp.watch([`${src}/**/*.md`, `${src}/_layouts/*.pug`], ['markdown', reload]);
   gulp.watch([`${src}/styles/**/*.{scss,css}`], ['styles', reload]);
   gulp.watch([`${src}/scripts/**/*.js`], ['lint', 'scripts', reload]);
   gulp.watch([`${src}/images/_svg-sprite/**/*.svg`],
