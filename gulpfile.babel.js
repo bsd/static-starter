@@ -209,6 +209,18 @@ gulp.task('markdown', () => {
   .pipe(gulp.dest(dist));
 });
 
+gulp.task('mdIndex', () => {
+  return gulp.src([
+    `${src}/post/*.md`
+  ])
+  .pipe($.plumber())
+  .pipe($.markdownToJson(marked))
+  .pipe($.jsoncombine('_index.json', function(data, meta) {
+    return new Buffer(JSON.stringify(data));
+  }))
+  .pipe(gulp.dest(file => file.base));
+});
+
 // Clean output directory
 gulp.task('clean', () => del(['.tmp', `${dist}/*`, `!${dist}/.git`],
     {dot: true}));
