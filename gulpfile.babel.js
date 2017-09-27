@@ -6,6 +6,7 @@ import path from 'path';
 import gulp from 'gulp';
 import del from 'del';
 import marked from 'marked';
+import merge from 'merge-stream';
 import runSequence from 'run-sequence';
 import browserSync from 'browser-sync';
 import swPrecache from 'sw-precache';
@@ -159,10 +160,10 @@ gulp.task('scripts', () => {
   .pipe($.size({title: 'scripts'}));
 });
 
-// HTML Minification optionsThis is pretty aggressive, difficult to read,
+// HTML Minification options. This is pretty aggressive, difficult to read,
 // and can look wrong to some people (i.e. this won't close body and html
-// tags as they are optional). If this isn't desired, consider commenting
-// this out, for example if handing static assets off to another developer.
+// tags as they are optional). If this isn't desired, consider modifying,
+// for example if handing static assets off to another developer.
 const minificationOptions = {
   removeComments: true,
   collapseWhitespace: true,
@@ -209,16 +210,22 @@ gulp.task('markdown', () => {
   .pipe(gulp.dest(dist));
 });
 
+// Creates an _index.json from all the markdown files for each specificed
+// folder. This JSON file can then be used by other templates to create content
+// index galleries.
 gulp.task('mdIndex', () => {
-  return gulp.src([
-    `${src}/post/*.md`
-  ])
-  .pipe($.plumber())
-  .pipe($.markdownToJson(marked))
-  .pipe($.jsoncombine('_index.json', function(data, meta) {
-    return new Buffer(JSON.stringify(data));
-  }))
-  .pipe(gulp.dest(file => file.base));
+  // Update `folders` with the directory for any repeatable content collections.
+  const folders = ['news', 'posts'];
+  const tasks = folders.map(function(folder) {
+    return gulp.src(`${src}/${folder}/**/*.md`)
+      .pipe($.plumber())
+      .pipe($.markdownToJson(marked))
+      .pipe($.jsoncombine('_index.json', function(data) {
+        return new Buffer(JSON.stringify(data));
+      }))
+      .pipe(gulp.dest(file => file.base));
+  });
+  return merge(tasks);
 });
 
 // Clean output directory
@@ -242,7 +249,8 @@ gulp.task('serve', ['default'], () => {
   });
 
   gulp.watch([`${src}/**/*.pug`], ['html', reload]);
-  gulp.watch([`${src}/**/*.md`, `${src}/_layouts/*.pug`], ['markdown', reload]);
+  gulp.watch([`${src}/**/*.md`, `${src}/_layouts/*.pug`],
+      ['markdown', 'mdIndex', reload]);
   gulp.watch([`${src}/styles/**/*.{scss,css}`], ['styles', reload]);
   gulp.watch([`${src}/scripts/**/*.js`], ['lint', 'scripts', reload]);
   gulp.watch([`${src}/images/_svg-sprite/**/*.svg`],
@@ -272,7 +280,7 @@ gulp.task('serve:dist', ['default'], () =>
 // Build production files, the default task
 gulp.task('default', ['clean'], cb =>
   runSequence(
-    ['styles', 'svg-sprites'],
+    ['styles', 'svg-sprites', 'mdIndex'],
     ['lint', 'html', 'markdown', 'scripts', 'images', 'copy'],
     'generate-service-worker',
     cb

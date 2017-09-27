@@ -3,4 +3,5 @@ dist/
 .tmp
 app.yaml
 app/_includes/svg-sprites.svg
+app/**/_index.json
 .DS_Store
