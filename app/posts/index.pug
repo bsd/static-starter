@@ -1,0 +1,17 @@
+extends /_layouts/_main.pug
+
+block content
+  - const contents = require('./app/posts/_index.json');
+  article.content-artice
+    .page-contain
+      h1 Blog
+      ul
+        for item, slug in contents
+          li
+            if item.image
+              a(href=`/posts/${slug}.html`)
+                img(src=item.image)
+            a(href=`/posts/${slug}.html`)
+              h2= item.title
+              if item.description
+                .blurb= item.description

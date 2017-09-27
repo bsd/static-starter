@@ -183,7 +183,10 @@ gulp.task('html', () => {
     `!${src}/**/_*.pug`
   ]).pipe($.pug({
     basedir: 'app',
-    pretty: true
+    pretty: true,
+    data: {
+      require: require
+    }
   }))
   .pipe(gulp.dest('.tmp'))
   .pipe($.htmlmin(minificationOptions))
@@ -198,7 +201,8 @@ gulp.task('markdown', () => {
   .pipe($.markdownToJson(marked))
   .pipe($.wrap(data =>
       fs.readFileSync(`${src}/${data.contents.template}`).toString(), {
-        md: marked
+        md: marked,
+        require: require
       }, {
         basedir: 'app',
         engine: 'pug',
@@ -228,6 +232,9 @@ gulp.task('mdIndex', () => {
   return merge(tasks);
 });
 
+gulp.task('fullHtmlBuild', cb =>
+    runSequence(['mdIndex'], ['html', 'markdown'], cb));
+
 // Clean output directory
 gulp.task('clean', () => del(['.tmp', `${dist}/*`, `!${dist}/.git`],
     {dot: true}));
@@ -248,7 +255,7 @@ gulp.task('serve', ['default'], () => {
     port: 3000
   });
 
-  gulp.watch([`${src}/**/*.pug`], ['html', reload]);
+  gulp.watch([`${src}/**/*.pug`], ['fullHtmlBuild', reload]);
   gulp.watch([`${src}/**/*.md`, `${src}/_layouts/*.pug`],
       ['markdown', 'mdIndex', reload]);
   gulp.watch([`${src}/styles/**/*.{scss,css}`], ['styles', reload]);
