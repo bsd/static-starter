@@ -29,6 +29,22 @@
   margin-bottom: 30px;
 }
 
+.content-header-wrapper {
+  @include clearfix;
+
+  &.has-image {
+    background-repeat: no-repeat;
+    background-size: cover;
+    color: $color-white;
+    margin: -50px 0 50px;
+    padding: 50px 0;
+
+    @media #{$bp-tablet-up} {
+      padding: 100px 0;
+    }
+  }
+}
+
 @media #{$bp-tablet-up} {
   .content-sidebar {
     @include grid-column(3);
