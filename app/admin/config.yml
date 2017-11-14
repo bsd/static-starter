@@ -1,41 +1,41 @@
 backend:
   name: github
-  repo: "bsd/static-starterkit" # Gulp will replace this with your GitHub repository
-  branch: "master" # Branch to update (master by default)
+  repo: # Example: bsd/static-starterkit
+  branch: master # Branch to update (master by default)
 
-media_folder: "app/images/uploads" # Folder where user uploaded files should go
-public_folder: "images/uploads"
+media_folder: app/images/uploads # Folder where user uploaded files should go
+public_folder: images/uploads
 
 collections: # A list of collections the CMS should be able to edit
-  - name: "post" # Used in routes, ie.: /admin/collections/:slug/edit
-    label: "Post" # Used in the UI, ie.: "New Post"
-    folder: "app/posts" # The path to the folder where the documents are stored
+  - name: post # Used in routes, ie.: /admin/collections/:slug/edit
+    label: Post # Used in the UI, ie.: New Post
+    folder: app/posts # The path to the folder where the documents are stored
     create: true # Allow users to create new documents in this collection
     fields: # The fields each document in this collection have
-      - {label: "Template", name: "template", widget: "hidden", default: "_layouts/_post.pug"}
-      - {label: "Title", name: "title", widget: "string"}
-      - {label: "Publish Date", name: "date", widget: "datetime"}
-      - {label: "Intro Blurb", name: "description", widget: "text"}
-      - {label: "Image", name: "image", widget: "image", required: false}
-      - {label: "Body", name: "body", widget: "markdown"}
-  - name: "pages"
-    label: "Pages"
+      - {label: Template, name: template, widget: hidden, default: _layouts/_post.pug}
+      - {label: Title, name: title, widget: string}
+      - {label: Publish Date, name: date, widget: datetime}
+      - {label: Intro Blurb, name: description, widget: text}
+      - {label: Image, name: image, widget: image, required: false}
+      - {label: Body, name: body, widget: markdown}
+  - name: pages
+    label: Pages
     files:
-      - file: "app/index.md"
-        label: "Home Page"
-        name: "home"
+      - file: app/index.md
+        label: Home Page
+        name: home
         fields:
-          - {label: "Template", name: "template", widget: "hidden", default: "_layouts/_page.pug"}
-          - {label: "Title", name: "title", widget: "string"}
-          - {label: "Lead Paragraph", name: "lead", widget: "text"}
-          - {label: "Hero Image", name: "image", widget: "image"}
-          - label: "Sections"
-            name: "sections"
-            widget: "list"
+          - {label: Template, name: template, widget: hidden, default: _layouts/_page.pug}
+          - {label: Title, name: title, widget: string}
+          - {label: Lead Paragraph, name: lead, widget: text}
+          - {label: Hero Image, name: image, widget: image}
+          - label: Sections
+            name: sections
+            widget: list
             fields:
-              - label: "Section Title"
-                name: "title"
-                widget: "string"
-              - label: "Section Content"
-                name: "content"
-                widget: "markdown"
+              - label: Section Title
+                name: title
+                widget: string
+              - label: Section Content
+                name: content
+                widget: markdown
