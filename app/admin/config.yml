@@ -1,5 +1,5 @@
 backend:
-  name: github
+  name: git-gateway # Necessary API for authenticating users: https://www.netlifycms.org/docs/add-to-your-site/#configuration
   repo: # Example: bsd/static-starterkit
   branch: master # Branch to update (master by default)
 
